@@ -128,7 +128,7 @@ This article is the hub/overview. Each section below links to a dedicated deep-d
 
 > **Deprecation notice.** On 29 October 2025, AWS announced that the AWS X-Ray SDKs and daemon enter **maintenance mode** as of **25 February 2026**, with planned **end of support on 25 February 2027**. During maintenance mode they receive only critical security/bug fixes — no new features. AWS's documented recommendation is to migrate instrumentation to the **AWS Distro for OpenTelemetry (ADOT)** or vendor-neutral OpenTelemetry SDKs, which continue to send trace data to X-Ray as a backend.
 
-→ **[AWS X-Ray](aws-xray.md)**: real Python/Flask and Node/Express instrumentation code, annotations vs. metadata, Lambda Active Tracing + IAM, the ECS daemon sidecar task-definition JSON, sampling rule JSON, filter-expression syntax, and what to use today given the OpenTelemetry migration.
+→ **[AWS X-Ray](aws-xray.md)**: ADOT/OpenTelemetry instrumentation as the primary path today (including the `aws.xray.annotations` span-attribute mechanism for indexed, searchable annotations), real Python/Flask and Node/Express classic-SDK code kept as the legacy reference, Lambda Active Tracing + IAM, the ECS daemon sidecar task-definition JSON, sampling rule JSON, filter-expression syntax, and what to use today given the OpenTelemetry migration.
 
 ## Directory of sub-services
 

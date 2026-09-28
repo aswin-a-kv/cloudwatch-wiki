@@ -1,7 +1,7 @@
 ---
 title: AWS X-Ray
-summary: AWS's distributed request-tracing service — practical instrumentation, sampling, filtering, and its 2026 migration to OpenTelemetry
-last_verified: 2026-09-21
+summary: AWS's distributed request-tracing service — ADOT/OpenTelemetry instrumentation (primary path) and classic SDK instrumentation (legacy), sampling, filtering, and its 2026 migration to OpenTelemetry
+last_verified: 2026-09-28
 categories: [Amazon Web Services, Distributed tracing, Observability]
 artifact: https://claude.ai/code/artifact/7ddf6b11-6610-4e0d-8f4e-273678114488
 ---
@@ -12,7 +12,7 @@ artifact: https://claude.ai/code/artifact/7ddf6b11-6610-4e0d-8f4e-273678114488
 
 This article is the practical companion to the [Amazon CloudWatch](amazon-cloudwatch.md) overview: it goes deep on how to actually instrument an application, configure sampling, query traces, and what to use *today* given X-Ray's move toward OpenTelemetry.
 
-> **Read this first.** On 29 October 2025, AWS announced that the **X-Ray SDKs and daemon enter maintenance mode on 25 February 2026**, with **end of support on 25 February 2027**. Everything under "Classic SDK instrumentation" below still works and is documented by AWS, but if you're instrumenting something new today, read [OpenTelemetry migration](#opentelemetry-what-to-use-today) first and seriously consider starting there instead.
+> **Read this first.** On 29 October 2025, AWS announced that the **X-Ray SDKs and daemon enter maintenance mode on 25 February 2026**, with **end of support on 25 February 2027**. Most new instrumentation today goes through **ADOT** (the AWS Distro for OpenTelemetry) rather than the classic SDK — see [ADOT / OpenTelemetry instrumentation](#adot--opentelemetry-instrumentation) below first. "Classic SDK instrumentation" further down still works and is fully documented by AWS, but is now the legacy path.
 
 ## How it fits together
 
@@ -25,9 +25,66 @@ This article is the practical companion to the [Amazon CloudWatch](amazon-cloudw
 - **X-Ray Insights** is automatic anomaly detection over traces, scoped per group.
 - The **X-Ray daemon** is a small local process that batches segment documents from your instrumented code and forwards them to the X-Ray API — required by the classic SDKs, not by OpenTelemetry-based instrumentation.
 
-## Classic SDK instrumentation
+## ADOT / OpenTelemetry instrumentation
 
-The AWS X-Ray SDKs (Python, Node.js, Java, .NET, Ruby, Go) generate segments in-process and hand them to the X-Ray daemon over UDP. This is the "classic" path, now in its final years of active development.
+Most new tracing today goes through **ADOT** (AWS Distro for OpenTelemetry) rather than the classic SDK below. [CloudWatch Application & Infrastructure Observability](application-observability.md#the-three-instrumentation-paths-and-why-the-choice-matters) already covers the three instrumentation-path trade-offs (ADOT SDK + CloudWatch Agent vs. plain OpenTelemetry SDK + Collector vs. the legacy X-Ray SDK) in depth — this section covers what's specific to *X-Ray itself* once traces are flowing: how OTel's data model maps onto X-Ray's, and the annotation/metadata equivalent.
+
+### Concept mapping
+
+| X-Ray concept | OpenTelemetry concept |
+|---|---|
+| Segment | Span (Server kind) |
+| Subsegment | Span (non-Server kind) |
+| X-Ray Recorder | Tracer Provider / Tracer |
+| Annotations / Metadata | Span **Attributes** |
+| X-Ray daemon | OpenTelemetry Collector (or the CloudWatch agent, v1.300025.0+) |
+| Sampling rules | OTel Sampling, with an X-Ray Remote Sampler available in several language SDKs to reuse the same console/API rules described below |
+
+A span's parent-child structure, once exported to X-Ray, becomes exactly the segment/subsegment tree the classic SDK would have produced — the console experience (service map, trace view) doesn't change based on which instrumentation produced the trace.
+
+### Annotations vs. metadata via OTel attributes
+
+**By default, every OpenTelemetry span attribute becomes X-Ray metadata — not indexed, not searchable.** To promote specific attributes to indexed, filterable **annotations** (the `annotation[key] = value` filter-expression syntax from the query cookbook above), add their keys to a special span attribute called `aws.xray.annotations`.
+
+**Python** (`opentelemetry-api`):
+
+```python
+from opentelemetry import trace
+
+tracer = trace.get_tracer(__name__)
+
+with tracer.start_as_current_span("charge_card") as span:
+    span.set_attribute("order.id", "12345")
+    span.set_attribute("aws.xray.annotations", ["order.id"])  # promotes order.id to an indexed annotation
+    span.set_attribute("request.body", str(payload))          # stays as metadata — not searchable
+```
+
+**Node.js** (`@opentelemetry/api`):
+
+```js
+const { trace } = require('@opentelemetry/api');
+
+const span = trace.getActiveSpan();
+span.setAttribute('order.id', '12345');
+span.setAttribute('aws.xray.annotations', ['order.id']);  // promotes order.id to an indexed annotation
+span.setAttribute('request.body', JSON.stringify(payload)); // stays as metadata — not searchable
+```
+
+If you're running the **OTel Collector** path (rather than the ADOT SDK exporting straight to X-Ray), the same promotion can be done at the collector's `awsxray` exporter instead of in application code — useful when you don't want to touch every call site:
+
+```yaml
+exporters:
+  awsxray:
+    region: us-east-1
+    indexed_attributes: ["order.id", "account.id"]   # promote just these keys
+    # index_all_attributes: true                      # or promote everything (use sparingly — annotation limits still apply)
+```
+
+Either way, the resulting annotation is queried exactly the same as one set by the classic SDK's `put_annotation` — e.g. `annotation[order.id] = "12345"` — and the same [limits](#annotations-vs-metadata--the-rule-that-matters) apply (50 annotations/trace, string/number/boolean values only).
+
+## Classic SDK instrumentation (legacy)
+
+The AWS X-Ray SDKs (Python, Node.js, Java, .NET, Ruby, Go) generate segments in-process and hand them to the X-Ray daemon over UDP. This is the pre-OpenTelemetry-migration path — still fully supported through the maintenance-mode timeline above, but ADOT (previous section) is what AWS now recommends for anything new.
 
 ### Python (`aws-xray-sdk`)
 
@@ -342,6 +399,9 @@ Practical guidance:
 14. "Transaction Search" — Amazon CloudWatch User Guide. <https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search.html>
 15. "Searching and analyzing spans" — Amazon CloudWatch User Guide. <https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search-search-analyze-spans.html>
 16. "Spans" (the `aws/spans` log group) — Amazon CloudWatch User Guide. <https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search-ingesting-span-log-groups.html>
+17. "Migrating from X-Ray instrumentation to OpenTelemetry instrumentation" — AWS X-Ray Developer Guide, "Working with span attributes" section (source of the `aws.xray.annotations` mechanism). <https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-migration.html>
+18. "Enable the customized X-Ray annotations" — AWS Distro for OpenTelemetry documentation. <https://aws-otel.github.io/docs/getting-started/x-ray>
+19. "awsxrayexporter" (Collector-level `indexed_attributes`/`index_all_attributes` config) — OpenTelemetry Collector Contrib, GitHub. <https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/awsxrayexporter>
 
 ---
-*Last verified 2026-09-21 against the sources above. The classic SDK/daemon material will become progressively less relevant after February 2026/2027 — re-check the OpenTelemetry migration guide before instrumenting anything new.*
+*Last verified 2026-09-28 against the sources above. The classic SDK/daemon material will become progressively less relevant after February 2026/2027 — re-check the OpenTelemetry migration guide before instrumenting anything new. The `aws.xray.annotations` promotion mechanism is documented at the API level; verify current behavior against the awsxrayexporter's own docs if using the OTel Collector path, since exporter-level defaults can change independently of the AWS-side migration guide.*
