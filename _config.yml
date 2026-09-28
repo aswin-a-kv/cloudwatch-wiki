@@ -1,0 +1,20 @@
+title: CloudWatch & X-Ray Field Wiki
+description: An OKF-style personal wiki on Amazon CloudWatch and AWS X-Ray — sourced from official AWS documentation.
+theme: jekyll-theme-cayman
+
+plugins:
+  - jekyll-relative-links
+
+relative_links:
+  enabled: true
+  collections: true
+
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+
+exclude:
+  - README.md
