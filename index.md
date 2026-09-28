@@ -5,6 +5,8 @@ layout: default
 
 A running table of contents for the wiki — a personal, OKF-style knowledge base on Amazon CloudWatch and AWS X-Ray, sourced from official AWS documentation.
 
+There's also a companion [slide deck](deck.html) covering the same practical content in a scroll/arrow-key-navigable format.
+
 | Article | Summary | Last verified |
 |---|---|---|
 | [Amazon CloudWatch](amazon-cloudwatch.md) | Hub/overview of AWS's monitoring, observability, and automation service family, including AWS X-Ray | 2026-08-18 |

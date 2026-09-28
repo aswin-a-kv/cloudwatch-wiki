@@ -1,0 +1,349 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>CloudWatch Field Guide Deck</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400&family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f7f6f1; --bg-alt:#eeece3; --paper:#fffffe; --ink:#1c1b18; --ink-soft:#4a4840; --muted:#7a776c;
+  --border:#d9d5c7; --border-strong:#c2beac; --accent:#0f7a72; --accent-soft:#e3f0ee; --accent-ink:#0b5c56;
+  --warn-bg:#fbf0dd; --warn-border:#d9a441; --warn-ink:#5c4109; --code-bg:#eef0e8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#171812; --bg-alt:#1f2019; --paper:#1b1c16; --ink:#e9e6da; --ink-soft:#c3c0b2; --muted:#8f8c7d;
+    --border:#3a3a2f; --border-strong:#4c4c3e; --accent:#5fc9bd; --accent-soft:#1f2f2b; --accent-ink:#8fe0d5;
+    --warn-bg:#2c2510; --warn-border:#8a6a1f; --warn-ink:#e8c877; --code-bg:#242519;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#171812; --bg-alt:#1f2019; --paper:#1b1c16; --ink:#e9e6da; --ink-soft:#c3c0b2; --muted:#8f8c7d;
+  --border:#3a3a2f; --border-strong:#4c4c3e; --accent:#5fc9bd; --accent-soft:#1f2f2b; --accent-ink:#8fe0d5;
+  --warn-bg:#2c2510; --warn-border:#8a6a1f; --warn-ink:#e8c877; --code-bg:#242519;
+}
+*{box-sizing:border-box;}
+html,body{margin:0; height:100%;}
+body{background:var(--bg); color:var(--ink); font-family:"Public Sans","Helvetica Neue",Arial,sans-serif; overflow:hidden;}
+@media (prefers-reduced-motion: no-preference){.deck{scroll-behavior:smooth;}}
+.deck{height:100vh; overflow-y:scroll; scroll-snap-type:y mandatory;}
+.slide{height:100vh; width:100vw; scroll-snap-align:start; scroll-snap-stop:always; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:4vh 6vw;}
+.slide-inner{max-width:960px; width:100%;}
+.slide.divider{background:var(--accent-soft);}
+.slide.divider .slide-inner{max-width:760px; text-align:center; margin:0 auto;}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:0.78rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin:0 0 0.8rem;}
+.divider .eyebrow{color:var(--accent-ink);}
+h1{font-family:"Source Serif 4",Georgia,serif; font-weight:700; font-size:clamp(2rem,4.6vw,3.3rem); line-height:1.1; margin:0 0 0.7rem; text-wrap:balance;}
+h2.slide-title{font-family:"Source Serif 4",Georgia,serif; font-weight:700; font-size:clamp(1.6rem,3.4vw,2.4rem); margin:0 0 1rem; text-wrap:balance; border-bottom:2px solid var(--border); padding-bottom:0.6rem;}
+.lede{font-size:clamp(1.02rem,1.5vw,1.3rem); color:var(--ink-soft); max-width:64ch; line-height:1.55;}
+code{font-family:"IBM Plex Mono",monospace; background:var(--code-bg); padding:0.08rem 0.4rem; border-radius:3px; font-size:0.85em;}
+pre.codeblock{background:var(--code-bg); border:1px solid var(--border); padding:0.8rem 1rem; overflow-x:auto; font-family:"IBM Plex Mono",monospace; font-size:0.82rem; line-height:1.5; margin:0.8rem 0 0; border-radius:6px; max-width:100%;}
+pre.codeblock code{background:none; padding:0;}
+ul.big{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0.85rem;}
+ul.big li{font-size:clamp(1rem,1.5vw,1.18rem); color:var(--ink-soft); padding-left:1.5rem; position:relative; line-height:1.5;}
+ul.big li::before{content:""; position:absolute; left:0; top:0.5em; width:8px; height:8px; border-radius:50%; background:var(--accent);}
+ul.big li b{color:var(--ink);}
+.svc{border:1px solid var(--border); border-left:4px solid var(--accent); background:var(--bg-alt); padding:0.85rem 1.1rem; margin-top:1rem; border-radius:2px;}
+.svc h5{margin:0 0 0.3rem; font-family:"Public Sans",sans-serif; font-size:1rem; font-weight:700;}
+.svc p{margin:0; font-size:0.95rem; color:var(--ink-soft);}
+.notice{background:var(--warn-bg); border:1px solid var(--warn-border); color:var(--warn-ink); padding:0.8rem 1.1rem; font-size:0.94rem; margin-top:1rem; border-radius:2px;}
+.notice strong{display:block; margin-bottom:0.2rem; text-transform:uppercase; font-size:0.72rem; letter-spacing:0.04em;}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:1.2rem;}
+@media (max-width:760px){.grid2{grid-template-columns:1fr;}}
+.icon-tile{width:58px; height:58px; border-radius:14px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; flex:0 0 auto; margin-bottom:0.9rem;}
+.icon-tile svg{width:30px; height:30px;}
+.nav-hint{position:fixed; bottom:1.3rem; right:1.5rem; font-family:"IBM Plex Mono",monospace; font-size:0.75rem; color:var(--muted); display:flex; align-items:center; gap:0.6rem; z-index:10;}
+.nav-btn{background:var(--paper); border:1px solid var(--border-strong); color:var(--ink-soft); border-radius:8px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem;}
+.nav-btn:hover{background:var(--accent-soft); color:var(--accent-ink);}
+.progress{position:fixed; top:0; left:0; height:3px; background:var(--accent); z-index:10; transition:width 0.25s ease;}
+</style>
+
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+  <section class="slide divider">
+    <div class="slide-inner">
+      <div class="eyebrow">CloudWatch Field Guide</div>
+      <h1>What matters beyond the basics</h1>
+      <p class="lede" style="margin:0 auto;">Logs, custom metrics, smarter alarms, X-Ray search, observability quick wins, and where Synthetics/RUM fit.</p>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Logs, beyond filter &amp; export</h2>
+      <ul class="big">
+        <li><b>A query can be a graph</b> — <code>stats … by bin(5m)</code> + <code>display</code>, not just a filtered list.</li>
+        <li><b>Log anomaly detection</b> — zero-config, per log group, trains on two weeks of history and flags new or abnormal patterns.</li>
+        <li><b>Three paths to CloudWatch</b> — native push, the CloudWatch agent, or EMF (a log line parsed into a metric).</li>
+      </ul>
+      <pre class="codeblock"><code>fields @timestamp, latency, path
+| stats pct(latency, 95) as p95 by path
+| sort p95 desc
+| limit 20</code></pre>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Log group protections: deletion, masking, visibility</h2>
+      <div class="grid2">
+        <div class="svc"><h5>Deletion protection</h5><p>One flag, off by default. Once on, any delete attempt is blocked until it's explicitly turned off again — no more "someone fat-fingered a delete."</p></div>
+        <div class="svc"><h5>Data Protection: Audit + Deidentify</h5><p><b>Audit</b> finds matches and can route findings to a destination. <b>Deidentify</b> is the part that actually masks the value on display, with asterisks — applied going forward, not retroactively.</p></div>
+      </div>
+      <ul class="big" style="margin-top:1rem;">
+        <li><b>Sensitive data count</b> — the visible per-log-group readout of what Audit actually found, so you know whether masking would even do anything before turning on Deidentify.</li>
+      </ul>
+      <div class="notice"><strong>Data Protection isn't free</strong>$0.12 per GB <i>scanned</i>, on top of normal ingestion/storage — it scans every byte, so scope it to log groups that genuinely handle sensitive data rather than enabling broadly.</div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Contributor Insights: who's actually driving this</h2>
+      <p class="lede">A rule against a log group, not a metric — ranks the top-N contributors (an IP, a tenant, a host) instead of just showing a total.</p>
+      <ul class="big">
+        <li><b>Keys</b> — which log field identifies the contributor (e.g. a source IP, a customer ID).</li>
+        <li><b>Optional: sum a field instead of counting</b> — rank by bytes transferred, not just event count.</li>
+        <li>Output is a graph, addable to a dashboard like any other widget.</li>
+      </ul>
+      <div class="svc"><h5>Worked example</h5><p>Rank VPC Flow Log source/destination IP pairs by total bytes transferred — the same "which one, specifically" question a plain aggregate metric can't answer.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Custom metrics: a metric filter already counts</h2>
+      <p class="lede">A metric filter turning a log pattern into a number <b>is</b> a custom metric. EMF is the direct-from-code alternative.</p>
+      <pre class="codeblock"><code>{
+  "_aws": { "Timestamp": 1735689600000,
+    "CloudWatchMetrics": [{ "Namespace": "MyApp/Orders",
+      "Dimensions": [["Service","Environment"]],
+      "Metrics": [{ "Name": "ProcessingTime", "Unit": "Milliseconds" }] }] },
+  "Service": "checkout", "Environment": "production", "ProcessingTime": 152
+}</code></pre>
+      <div class="svc"><h5>Worked example</h5><p>A Lambda error-rate alarm via metric math (errors ÷ invocations) — a common, minimal use of metric math.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Composite &amp; anomaly alarms</h2>
+      <p class="lede">Was this threshold measured, or guessed?</p>
+      <ul class="big">
+        <li><b>Composite alarms</b> — one root cause, one page, not three: <code>ALARM(a) AND ALARM(b)</code>.</li>
+        <li><b>Anomaly detection</b> — replace a guessed static threshold with a learned expected-value band.</li>
+      </ul>
+      <div class="svc"><h5>Good habit</h5><p>Set <code>treat_missing_data</code> explicitly on every alarm — avoids surprising evaluation behavior when a metric goes quiet.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Alarm mute rules: silence, don't disable</h2>
+      <p class="lede">Stop notifications for a window without losing the alarm's evaluation history or turning it off entirely.</p>
+      <ul class="big">
+        <li><b>Scheduled mute</b> — one-time or recurring window, built from a picker or a raw cron expression, targeting a chosen set of alarms.</li>
+        <li><b>Quick mute</b> — select alarms in the list → mute for a preset window (15 min / 1 h / 3 h) or a custom time. For "I know this fires during my maintenance window," right when you need it.</li>
+      </ul>
+      <div class="svc"><h5>Bonus</h5><p>Existing mute rules can be applied retroactively to newly created alarms — one action instead of remembering to add each new alarm to a maintenance exception list.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Dashboards: put math front and center</h2>
+      <p class="lede">Three widget types worth knowing: <b>metric</b> (a metric or metric-math expression), <b>log</b> (a Logs Insights query, rendered right on the dashboard), <b>alarm status</b>.</p>
+      <pre class="codeblock"><code>{ "type": "metric", "properties": {
+    "title": "Checkout error rate (%)",
+    "metrics": [
+      [{ "expression": "errors/invocations*100", "id": "e1" }],
+      ["AWS/Lambda","Errors","FunctionName","checkout-handler",{"id":"errors","visible":false}],
+      ["AWS/Lambda","Invocations","FunctionName","checkout-handler",{"id":"invocations","visible":false}]
+    ], "view": "timeSeries" } }</code></pre>
+      <p class="lede" style="margin-top:0.8rem;">The same metric-math expression an alarm uses can drive a widget — viewed proactively, not just alerted on. A custom EMF metric slots into a widget exactly like any AWS-service metric.</p>
+      <div class="svc"><h5>Free cross-Region graphing</h5><p>Mixing Regions in one graph needs zero extra setup — set <code>region</code> per metric. Cross-<i>account</i> is the part that needs Observability Access Manager.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Dashboard variables: one dashboard, not fifteen</h2>
+      <p class="lede">Swap the target instead of duplicating the whole dashboard per target — fewer dashboards to keep in sync, and fewer $3/month line items.</p>
+      <ul class="big">
+        <li><b>Property variable</b> — replaces every instance of a chosen field (a function name, an instance ID) across all widgets at once, via an input on the dashboard itself.</li>
+        <li><b>Pattern variable</b> — a regex-based partial substitution, for when you need to transform part of a value rather than swap it wholesale.</li>
+      </ul>
+      <div class="notice"><strong>Caveat</strong>A shared dashboard freezes the variable at whatever value it had when shared — viewers can't switch targets themselves.</div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">
+        <span class="icon-tile"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 12h5"/><path d="M12 12 17 7"/><path d="M12 12l7 5" stroke-dasharray="1.5 2.5"/></svg></span>
+        X-Ray: search, don't just follow a link
+      </h2>
+      <ul class="big">
+        <li><b>Search directly</b> — <code>service()</code>, <code>responsetime</code>, <code>fault</code>, groups.</li>
+        <li><b>Add an annotation, then filter by it</b> — the same move as custom metrics: your own signal on default telemetry.</li>
+        <li><b>Service map</b> — find matching traces, then see exactly where in the chain it broke.</li>
+      </ul>
+      <pre class="codeblock"><code>subsegment.put_annotation('order_id', '12345')  # indexed, searchable
+segment.put_metadata('request_body', payload)    # not indexed</code></pre>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">X-Ray: everyday query patterns</h2>
+      <p class="lede">Filter expressions answer "which traces match" — not "rank them." For that, a second layer exists.</p>
+      <pre class="codeblock"><code>service("payments-api") { http.status = 503 }
+responsetime > 2
+edge("api.example.com", "backend.example.com") { error }</code></pre>
+      <div class="notice"><strong>The gap</strong>Trace search has no sort — it's always most-recent-first. "Top 10 slowest calls" or "error count by API" isn't answerable with a filter expression alone.</div>
+      <div class="svc"><h5>CloudWatch Transaction Search</h5><p>Indexes 100% of spans as structured logs, queryable with Logs Insights' aggregation and sort — the native way to ask APM-shaped questions.</p></div>
+      <pre class="codeblock"><code>FILTER `attributes.http.response.status_code` >= 500
+| STATS count(*) as errors by attributes.aws.local.service
+| SORT errors DESC
+| LIMIT 5</code></pre>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">How a trace actually gets sampled</h2>
+      <p class="lede">Service (OTel SDK/ADOT) → OTel Collector → X-Ray. The sampling decision is made <b>once, by the root</b> of the chain.</p>
+      <div class="notice"><strong>Why this matters</strong>If the root of a chain is untraced, nothing downstream gets a trace either. Event-driven hops (SQS/SNS/EventBridge) don't auto-propagate trace context across the boundary — that takes an explicit step, not just a config flag.</div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Observability: often a habit gap, not a setup gap</h2>
+      <div class="grid2">
+        <div class="svc"><h5>Container Insights</h5><p>Enhanced mode dashboards automatically once enabled. The common failure is checking it only during fires, not as a habit.</p></div>
+        <div class="svc"><h5>ServiceLens</h5><p>Zero extra setup wherever Container Insights + X-Ray data already flow — it's discoverable, not buildable.</p></div>
+        <div class="svc"><h5>Lambda Insights</h5><p>A layer + an IAM policy, no code change — a low-cost signal to enable.</p></div>
+        <div class="svc"><h5>Bigger lifts</h5><p>Application Signals (real instrumentation work) and Database Insights (RDS/Aurora-only, not applicable to DynamoDB).</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide divider">
+    <div class="slide-inner">
+      <div class="eyebrow">Worth knowing about</div>
+      <h1>Newer capabilities, for later</h1>
+      <p class="lede" style="margin:0 auto;">Not gaps to close this week — things worth having on the radar as needs come up.</p>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Application Signals: golden signals + SLOs, built in</h2>
+      <p class="lede">Automatic call-volume, availability, latency, and fault metrics per service, a generated service map, and first-class SLOs — without hand-rolled metric math.</p>
+      <ul class="big">
+        <li><b>SLOs</b> defined directly against an auto-collected signal (e.g. "99% of requests under 300ms over a rolling 30 days") — burn-rate tracking comes free with the definition.</li>
+        <li><b>Instrumentation path matters</b>: ADOT SDK + CloudWatch Agent is the default — it's the only path with full Container Insights integration and metrics on 100% of traffic regardless of trace sampling.</li>
+      </ul>
+      <div class="svc"><h5>If tracing is already set up</h5><p>Adopting this means reconfiguring an existing OTel Collector setup, not deploying new infrastructure — real instrumentation work, but not a from-scratch build.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Database Insights: query load meets app context</h2>
+      <p class="lede">Sits on top of, and is gradually replacing, classic RDS/Aurora Performance Insights.</p>
+      <ul class="big">
+        <li><b>Standard mode</b> — default, rolling 7-day history, same pricing as Performance Insights, optional 1–24 month retention.</li>
+        <li><b>Advanced mode</b> — 1–24 month retention plus execution-plan capture and on-demand deep analysis, for an extra $0.0125 per vCPU-hour.</li>
+      </ul>
+      <div class="notice"><strong>Direction of travel</strong>After 30 June 2026, only Advanced mode supports execution plans and on-demand analysis — Standard alone won't be enough for query-plan-level debugging going forward.</div>
+      <div class="svc"><h5>Pairs with Application Signals</h5><p>When the calling service is also instrumented, a query-load spike traces back to which service caused it, instead of dead-ending at the database.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">S3 Tables Integration: query logs with SQL, at rest</h2>
+      <p class="lede">Exports Logs data into a managed Apache Iceberg table, queryable directly from Athena, Redshift, or EMR — no CloudWatch console required to read it.</p>
+      <ul class="big">
+        <li><b>No backfill</b> — only events ingested after you associate a log source flow into the table.</li>
+        <li><b>Retention mirrors the source log group</b> — not an independent long-term archive on its own.</li>
+        <li><b>No extra storage cost</b> beyond normal ingestion — you pay only for the queries run against it.</li>
+      </ul>
+      <div class="svc"><h5>Reach for it when</h5><p>You need SQL-style analysis beyond what Logs Insights offers, or want to hand log data to a team that already works in Athena/Redshift rather than the CloudWatch console.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Bearer token authentication: logs without an AWS SDK</h2>
+      <p class="lede">Lets a client that can't do AWS SigV4 signing — a plain OpenTelemetry exporter, a third-party tool — send logs with a simple <code>Authorization: Bearer</code> header instead.</p>
+      <ul class="big">
+        <li>Works with the OTLP <code>/v1/logs</code> endpoint too, not just the standard ingestion API.</li>
+        <li>The token is an IAM service-specific credential, shown once, with configurable expiry (1 to 36,600 days). Enabled per log group.</li>
+      </ul>
+      <div class="notice"><strong>AWS's own guidance</strong>Prefer SigV4 with short-term credentials wherever the client supports it — this exists specifically as a fallback for clients that structurally can't.</div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Synthetics &amp; RUM: narrower than you'd think</h2>
+      <ul class="big">
+        <li><b>RUM ≠ marketing/behavior analytics</b> — tools like GTM or Hotjar don't plug into alerting. RUM turns JS errors, HTTP errors, and Core Web Vitals into CloudWatch alarms next to every other infrastructure alarm.</li>
+        <li><b>Synthetics ≠ uptime pinging</b> — a third-party monitor covers basic uptime. Synthetics' value: multi-step transaction canaries with screenshots on failure, in the same alerting pipeline, reaching non-public endpoints a third party can't.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Practical checklist</h2>
+      <ul class="big">
+        <li><b>Metric filters can report gaps, not zeros</b> — set <code>default_value</code> on the <code>metric_transformation</code>, a one-line fix.</li>
+        <li><b>Lambda Insights is a cheap signal to leave uncollected</b> — attach the layer, no code change.</li>
+        <li><b>Event-driven tracing gaps need more than a flag</b> — trace context must be explicitly propagated across queue/topic boundaries.</li>
+        <li><b>Turn on deletion protection for log groups that matter</b> — a one-line flag, no more "someone fat-fingered a delete" incidents.</li>
+      </ul>
+    </div>
+  </section>
+
+</div>
+
+<div class="nav-hint">
+  <button class="nav-btn" id="prevBtn" aria-label="Previous slide">↑</button>
+  <span><span id="slideNum">1</span> / <span id="slideTotal"></span></span>
+  <button class="nav-btn" id="nextBtn" aria-label="Next slide">↓</button>
+</div>
+
+<script>
+(function(){
+  var deck = document.getElementById('deck');
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var progress = document.getElementById('progress');
+  var slideNum = document.getElementById('slideNum');
+  document.getElementById('slideTotal').textContent = slides.length;
+  function currentIndex(){
+    var idx = Math.round(deck.scrollTop / window.innerHeight);
+    return Math.max(0, Math.min(slides.length - 1, idx));
+  }
+  function update(){
+    var idx = currentIndex();
+    slideNum.textContent = idx + 1;
+    progress.style.width = ((idx + 1) / slides.length * 100) + '%';
+  }
+  function goTo(idx){
+    idx = Math.max(0, Math.min(slides.length - 1, idx));
+    slides[idx].scrollIntoView({behavior:'smooth', block:'start'});
+  }
+  deck.addEventListener('scroll', function(){ window.requestAnimationFrame(update); });
+  document.addEventListener('keydown', function(e){
+    if(['ArrowDown','ArrowRight','PageDown',' '].indexOf(e.key) > -1){ e.preventDefault(); goTo(currentIndex() + 1); }
+    if(['ArrowUp','ArrowLeft','PageUp'].indexOf(e.key) > -1){ e.preventDefault(); goTo(currentIndex() - 1); }
+  });
+  document.getElementById('nextBtn').addEventListener('click', function(){ goTo(currentIndex() + 1); });
+  document.getElementById('prevBtn').addEventListener('click', function(){ goTo(currentIndex() - 1); });
+  update();
+})();
+</script>
+
+</body></html>
