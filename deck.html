@@ -295,17 +295,6 @@ edge("api.example.com", "backend.example.com") { error }</code></pre>
     </div>
   </section>
 
-  <section class="slide">
-    <div class="slide-inner">
-      <h2 class="slide-title">Practical checklist</h2>
-      <ul class="big">
-        <li><b>Metric filters can report gaps, not zeros</b> — set <code>default_value</code> on the <code>metric_transformation</code>, a one-line fix.</li>
-        <li><b>Lambda Insights is a cheap signal to leave uncollected</b> — attach the layer, no code change.</li>
-        <li><b>Event-driven tracing gaps need more than a flag</b> — trace context must be explicitly propagated across queue/topic boundaries.</li>
-        <li><b>Turn on deletion protection for log groups that matter</b> — a one-line flag, no more "someone fat-fingered a delete" incidents.</li>
-      </ul>
-    </div>
-  </section>
 
 </div>
 
