@@ -40,6 +40,8 @@ ul.big{list-style:none; margin:0; padding:0; display:flex; flex-direction:column
 ul.big li{font-size:clamp(1rem,1.5vw,1.18rem); color:var(--ink-soft); padding-left:1.5rem; position:relative; line-height:1.5;}
 ul.big li::before{content:""; position:absolute; left:0; top:0.5em; width:8px; height:8px; border-radius:50%; background:var(--accent);}
 ul.big li b{color:var(--ink);}
+ul.big li a{color:var(--accent-ink); text-decoration:underline; text-underline-offset:3px;}
+ul.big li a:hover{color:var(--accent);}
 .svc{border:1px solid var(--border); border-left:4px solid var(--accent); background:var(--bg-alt); padding:0.85rem 1.1rem; margin-top:1rem; border-radius:2px;}
 .svc h5{margin:0 0 0.3rem; font-family:"Public Sans",sans-serif; font-size:1rem; font-weight:700;}
 .svc p{margin:0; font-size:0.95rem; color:var(--ink-soft);}
@@ -210,7 +212,7 @@ ul.big li b{color:var(--ink);}
       <h2 class="slide-title">Logs, beyond filter &amp; export</h2>
       <ul class="big">
         <li><b>A query can be a graph</b> — <code>stats … by bin(5m)</code> + <code>display</code>, not just a filtered list.</li>
-        <li><b>Log anomaly detection</b> — zero-config, per log group, trains on two weeks of history and flags new or abnormal patterns.</li>
+        <li><b><a href="images/log-anomalies-list.png" target="_blank" rel="noopener">Log anomaly detection</a></b> — zero-config, per log group, trains on two weeks of history and flags new or abnormal patterns.</li>
         <li><b>Three paths to CloudWatch</b> — native push, the CloudWatch agent, or EMF (a log line parsed into a metric).</li>
       </ul>
       <pre class="codeblock"><code>fields @timestamp, latency, path
