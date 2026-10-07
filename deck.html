@@ -60,6 +60,145 @@ ul.big li b{color:var(--ink);}
 
   <section class="slide divider">
     <div class="slide-inner">
+      <div class="eyebrow">AWS Logging &amp; Observability</div>
+      <h1>Monitoring with Amazon CloudWatch</h1>
+      <p class="lede" style="margin:0 auto;">Start with the fundamentals — metrics, logs, alarms, dashboards, and traces — then move on to what matters beyond the basics.</p>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Observability: the three pillars</h2>
+      <p class="lede">You can't walk over to a cloud server and look inside. So the system gives off signals, and you read them from the outside. Almost every tool, CloudWatch included, is built on three kinds.</p>
+      <ul class="big">
+        <li><b>Metrics</b> — numbers over time ("CPU at 80%"). Cheap, great for graphs and alerts. Tell you <i>that</i> something is wrong.</li>
+        <li><b>Logs</b> — text records of individual events ("payment declined for order 8842"). Carry the detail. Tell you <i>what</i> happened.</li>
+        <li><b>Traces</b> — one request's journey across services ("3s checkout, 2.8s in the DB"). Tell you <i>where</i> it happened.</li>
+      </ul>
+      <div class="svc"><h5>Kitchen analogy</h5><p>Metrics are the gauges, logs are the order tickets on the rail, traces are following one order from grill to table. The whole point of CloudWatch: all three in one place.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Why CloudWatch, and a map of the console</h2>
+      <p class="lede">AWS's native monitoring service. Its edge: almost every other AWS service already pushes metrics and logs into it automatically — you wire nothing up. X-Ray (tracing) and Application Signals (APM) now live in the same console too.</p>
+      <ul class="big">
+        <li><b>Logs, Metrics, Alarms</b> — the three you'll use 90% of the time.</li>
+        <li><b>X-Ray traces, Dashboards, Application Signals</b> — tracing, custom graphs, automatic APM.</li>
+        <li><b>Insights family, RUM &amp; Synthetics, Network monitoring</b> — curated deep-dives and user-side views, reached for a specific need.</li>
+      </ul>
+      <div class="notice"><strong>Everything is per Region</strong>App in Mumbai, console on N. Virginia = an empty screen. Always check the Region selector top-right first.</div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Metrics: numbers measured over time</h2>
+      <p class="lede">Strip the jargon and a metric is a list of (time, number) pairs. 10:00 → 45, 10:01 → 52. CloudWatch stores them and draws the line.</p>
+      <ul class="big">
+        <li><b>Namespace</b> = the folder (<code>AWS/EC2</code>, <code>AWS/Lambda</code>, or your own). <b>Dimensions</b> = labels that pin it to one thing (<code>InstanceId=i-0abc</code>).</li>
+        <li><b>Three sources</b> — AWS services publish automatically, the CloudWatch agent reports host-level (memory, disk), your code emits custom metrics via <code>PutMetricData</code>.</li>
+        <li><b>Statistic matters</b> — same data, pick Average / Sum / Maximum / p99. For latency, p90/p99 tells a truer story than average.</li>
+      </ul>
+      <div class="svc"><h5>The one-liner</h5><p><code>AWS/EC2</code> → <code>CPUUtilization</code> → <code>InstanceId=i-0abc</code> is one unique line on a graph. Namespace is the cabinet, metric name the folder, dimensions the label.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Logs: three nested boxes</h2>
+      <p class="lede">A log is a line of text written when something happens. CloudWatch Logs collects, keeps, and searches them. The console is organized exactly this way:</p>
+      <ul class="big">
+        <li><b>Log event</b> — one line. A timestamp plus a message.</li>
+        <li><b>Log stream</b> — events from one source (one container, one Lambda env). One worker's notebook.</li>
+        <li><b>Log group</b> — all streams for one app (<code>/aws/lambda/checkout</code>). You set retention and permissions here, and search all streams at once.</li>
+      </ul>
+      <div class="svc"><h5>How logs get in</h5><p>Native AWS integration (VPC Flow Logs, API Gateway), Lambda automatically (anything you <code>print</code>), the CloudWatch agent tailing files on EC2/ECS/EKS, or your code via <code>PutLogEvents</code>.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Logs: retention, cost, and classes</h2>
+      <p class="lede">The mistake that costs real money: by default, logs are kept <b>forever</b>, and CloudWatch charges for storage.</p>
+      <ul class="big">
+        <li><b>Retention</b> — set per log group, 1 day to 10 years or never expire. Set 30–90 days on every group. The #1 cost tip.</li>
+        <li><b>Log classes</b> — Standard (full features, actively queried) vs Infrequent Access (cheaper, "must keep, rarely read" / compliance).</li>
+        <li><b>Encryption</b> — log groups can be KMS-encrypted for security-conscious workloads.</li>
+      </ul>
+      <div class="svc"><h5>Worked example</h5><p>A group you never read but must keep 7 years for compliance? Set a 7-year retention <i>and</i> switch it to Infrequent Access.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Making logs useful: query, tail, filter</h2>
+      <p class="lede">The value isn't storing millions of lines — it's getting answers out fast.</p>
+      <ul class="big">
+        <li><b>Logs Insights</b> — a query tool that reads as a pipeline: pick fields, filter, aggregate, sort. Recent consoles add a natural-language query generator.</li>
+        <li><b>Live Tail</b> — new events stream to your screen the instant they're written, like <code>tail -f</code> in the browser. Metered — stop when done.</li>
+        <li><b>Metric filters</b> — watch a log group for a pattern (e.g. <code>ERROR</code>) and bump a metric each match. Log text becomes a number you can alarm on. <b>Not retroactive</b> — set up early.</li>
+      </ul>
+      <pre class="codeblock"><code>fields @timestamp, @message
+| filter @message like /ERROR/
+| sort @timestamp desc
+| limit 20</code></pre>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Alarms: monitoring becomes alerting</h2>
+      <p class="lede">A graph nobody watches at 2am is useless. An alarm watches a metric for you and acts when it crosses a line.</p>
+      <ul class="big">
+        <li><b>The pieces</b> — a metric (with statistic + period), a threshold and comparison, and evaluation periods ("3 of 3 five-minute periods above 80%") to avoid paging on a blip.</li>
+        <li><b>Three states</b> — <b>OK</b>, <b>ALARM</b>, and <b>INSUFFICIENT_DATA</b> (not broken — CloudWatch just can't see enough data; a stopped or brand-new resource sits here).</li>
+      </ul>
+      <div class="svc"><h5>What firing does — the action</h5><p>Notify a human via an <b>SNS topic</b> (email, SMS, Slack, PagerDuty), trigger EC2 Auto Scaling to fix it, or route through EventBridge to a Lambda for custom logic.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Dashboards: the picture on one screen</h2>
+      <p class="lede">A custom page where you pin the graphs and numbers that matter, so you glance at one screen instead of hunting menus.</p>
+      <ul class="big">
+        <li><b>Widgets</b> — a line graph, a single big number, a gauge, an alarm-status panel, a Logs Insights result, or a text note.</li>
+        <li><b>One-click add</b> — any Metrics graph or Logs Insights result drops onto a dashboard; no starting from scratch.</li>
+        <li><b>Cross-service, cross-Region, cross-account, shareable</b> — one page can show the whole stack, even to people without an AWS login.</li>
+      </ul>
+      <div class="svc"><h5>The real skill</h5><p>Not building a dashboard — choosing the <i>few</i> graphs that tell you the system is healthy, instead of forty widgets nobody reads.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Tracing with X-Ray: following one request</h2>
+      <p class="lede">The metric says "slow." The logs are scattered across ten services. Which one is the culprit? That's what tracing solves — it follows one request through every hop and times each.</p>
+      <ul class="big">
+        <li><b>Segment</b> = one service's work on a request. <b>Subsegment</b> = a slice inside it ("200ms was the DynamoDB call"). <b>Trace</b> = all segments for the same request, stitched together.</li>
+        <li><b>Trace ID</b> travels with the request like a relay baton — every service writes its segments under the same ID. <b>Sampling</b> records a representative subset, not every request.</li>
+        <li><b>Instrumentation needed</b> — Lambda/API Gateway active tracing (a checkbox), the X-Ray SDK, or increasingly ADOT (OpenTelemetry).</li>
+      </ul>
+      <div class="svc"><h5>Reading it</h5><p>The <b>service map</b> turns a sick node red; the <b>segments timeline</b> is a waterfall where the widest bar is your bottleneck.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Application Signals &amp; the rest of the toolkit</h2>
+      <p class="lede">Everything so far is building blocks. Application Signals is the newer APM layer that does the golden-signal monitoring <b>for</b> you — volume, latency, errors, availability per service, an auto-discovered service map, and SLOs.</p>
+      <div class="grid2">
+        <div class="svc"><h5>SLOs</h5><p>A promise as a number ("checkout under 300ms, 99.9% of the time"), with error-budget tracking. The console can now recommend targets.</p></div>
+        <div class="svc"><h5>Curated deep-dives</h5><p>Container / Lambda / Database Insights for a specific workload; RUM and Synthetics for the user-side view.</p></div>
+      </div>
+      <div class="svc"><h5>Mental model</h5><p>X-Ray and raw metrics are the engine; Application Signals is the dashboard on top that already knows what "healthy" looks like.</p></div>
+    </div>
+  </section>
+
+  <section class="slide divider">
+    <div class="slide-inner">
       <div class="eyebrow">CloudWatch Field Guide</div>
       <h1>What matters beyond the basics</h1>
       <p class="lede" style="margin:0 auto;">Logs, custom metrics, smarter alarms, X-Ray search, observability quick wins, and where Synthetics/RUM fit.</p>
