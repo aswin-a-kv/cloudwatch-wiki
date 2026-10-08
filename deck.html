@@ -40,8 +40,8 @@ ul.big{list-style:none; margin:0; padding:0; display:flex; flex-direction:column
 ul.big li{font-size:clamp(1rem,1.5vw,1.18rem); color:var(--ink-soft); padding-left:1.5rem; position:relative; line-height:1.5;}
 ul.big li::before{content:""; position:absolute; left:0; top:0.5em; width:8px; height:8px; border-radius:50%; background:var(--accent);}
 ul.big li b{color:var(--ink);}
-ul.big li a{color:var(--accent-ink); text-decoration:underline; text-underline-offset:3px;}
-ul.big li a:hover{color:var(--accent);}
+ul.big li a, .svc a{color:var(--accent-ink); text-decoration:underline; text-underline-offset:3px;}
+ul.big li a:hover, .svc a:hover{color:var(--accent);}
 .svc{border:1px solid var(--border); border-left:4px solid var(--accent); background:var(--bg-alt); padding:0.85rem 1.1rem; margin-top:1rem; border-radius:2px;}
 .svc h5{margin:0 0 0.3rem; font-family:"Public Sans",sans-serif; font-size:1rem; font-weight:700;}
 .svc p{margin:0; font-size:0.95rem; color:var(--ink-soft);}
@@ -203,7 +203,7 @@ ul.big li a:hover{color:var(--accent);}
     <div class="slide-inner">
       <div class="eyebrow">CloudWatch Field Guide</div>
       <h1>What matters beyond the basics</h1>
-      <p class="lede" style="margin:0 auto;">Logs, custom metrics, smarter alarms, X-Ray search, observability quick wins, and where Synthetics/RUM fit.</p>
+      <p class="lede" style="margin:0 auto;">Logs, custom metrics, smarter alarms, X-Ray search and observability quick wins.</p>
     </div>
   </section>
 
@@ -211,14 +211,10 @@ ul.big li a:hover{color:var(--accent);}
     <div class="slide-inner">
       <h2 class="slide-title">Logs, beyond filter &amp; export</h2>
       <ul class="big">
-        <li><b>A query can be a graph</b> — <code>stats … by bin(5m)</code> + <code>display</code>, not just a filtered list.</li>
-        <li><b><a href="images/log-anomalies-list.png" target="_blank" rel="noopener">Log anomaly detection</a></b> — zero-config, per log group, trains on two weeks of history and flags new or abnormal patterns.</li>
-        <li><b>Three paths to CloudWatch</b> — native push, the CloudWatch agent, or EMF (a log line parsed into a metric).</li>
+        <li><b>More query commands</b> — <code>parse</code>, <code>dedup</code>, <code>pattern</code>, <code>diff</code>, <code>estimate</code></li>
+        <li><b><a href="images/log-anomalies-list.png" target="_blank" rel="noopener">Log anomaly detection</a></b> — zero-config, learns your normal, flags the odd</li>
       </ul>
-      <pre class="codeblock"><code>fields @timestamp, latency, path
-| stats pct(latency, 95) as p95 by path
-| sort p95 desc
-| limit 20</code></pre>
+      <div class="notice"><strong>Queries aren't free</strong>$0.005 per GB <i>scanned</i>. Narrow the time range and log groups, and end with <code>| estimate</code> to preview.</div>
     </div>
   </section>
 
@@ -226,13 +222,13 @@ ul.big li a:hover{color:var(--accent);}
     <div class="slide-inner">
       <h2 class="slide-title">Log group protections: deletion, masking, visibility</h2>
       <div class="grid2">
-        <div class="svc"><h5>Deletion protection</h5><p>One flag, off by default. Once on, any delete attempt is blocked until it's explicitly turned off again — no more "someone fat-fingered a delete."</p></div>
-        <div class="svc"><h5>Data Protection: Audit + Deidentify</h5><p><b>Audit</b> finds matches and can route findings to a destination. <b>Deidentify</b> is the part that actually masks the value on display, with asterisks — applied going forward, not retroactively.</p></div>
+        <div class="svc"><h5>Deletion protection</h5><p>One flag, off by default. Blocks deletes until turned off.</p></div>
+        <div class="svc"><h5><a href="images/data-protection-masked-logs.png" target="_blank" rel="noopener">Data Protection</a></h5><p><b>Audit</b> finds sensitive data. <b>Deidentify</b> masks it with asterisks, going forward only.</p></div>
       </div>
       <ul class="big" style="margin-top:1rem;">
-        <li><b>Sensitive data count</b> — the visible per-log-group readout of what Audit actually found, so you know whether masking would even do anything before turning on Deidentify.</li>
+        <li><b><a href="images/data-protection-sensitive-data-count.png" target="_blank" rel="noopener">Sensitive data count</a></b> — what Audit found, per log group</li>
       </ul>
-      <div class="notice"><strong>Data Protection isn't free</strong>$0.12 per GB <i>scanned</i>, on top of normal ingestion/storage — it scans every byte, so scope it to log groups that genuinely handle sensitive data rather than enabling broadly.</div>
+      <div class="notice"><strong>Not free</strong>$0.12 per GB <i>scanned</i>. Scope it to log groups that handle sensitive data.</div>
     </div>
   </section>
 
@@ -241,50 +237,65 @@ ul.big li a:hover{color:var(--accent);}
       <h2 class="slide-title">Contributor Insights: who's actually driving this</h2>
       <p class="lede">A rule against a log group, not a metric — ranks the top-N contributors (an IP, a tenant, a host) instead of just showing a total.</p>
       <ul class="big">
-        <li><b>Keys</b> — which log field identifies the contributor (e.g. a source IP, a customer ID).</li>
-        <li><b>Optional: sum a field instead of counting</b> — rank by bytes transferred, not just event count.</li>
-        <li>Output is a graph, addable to a dashboard like any other widget.</li>
+        <li><b><a href="images/contributor-insights-rule-form.png" target="_blank" rel="noopener">Keys</a></b> — which log field identifies the contributor (e.g. a source IP, a customer ID).</li>
+        <li><b>Optional: sum a number field instead of counting</b> — for example bytes, if your logs have a bytes field.</li>
+        <li>Output is <a href="images/contributor-insights-graph-and-ranking.png" target="_blank" rel="noopener">a graph</a>, addable to a dashboard like any other widget.</li>
       </ul>
-      <div class="svc"><h5>Worked example</h5><p>Rank VPC Flow Log source/destination IP pairs by total bytes transferred — the same "which one, specifically" question a plain aggregate metric can't answer.</p></div>
     </div>
   </section>
 
   <section class="slide">
     <div class="slide-inner">
-      <h2 class="slide-title">Custom metrics: a metric filter already counts</h2>
-      <p class="lede">A metric filter turning a log pattern into a number <b>is</b> a custom metric. EMF is the direct-from-code alternative.</p>
-      <pre class="codeblock"><code>{
-  "_aws": { "Timestamp": 1735689600000,
-    "CloudWatchMetrics": [{ "Namespace": "MyApp/Orders",
-      "Dimensions": [["Service","Environment"]],
-      "Metrics": [{ "Name": "ProcessingTime", "Unit": "Milliseconds" }] }] },
-  "Service": "checkout", "Environment": "production", "ProcessingTime": 152
-}</code></pre>
-      <div class="svc"><h5>Worked example</h5><p>A Lambda error-rate alarm via metric math (errors ÷ invocations) — a common, minimal use of metric math.</p></div>
+      <h2 class="slide-title">Query your metrics with SQL</h2>
+      <p class="lede">Metrics Insights: a SQL-style query language for metrics, built-in or custom.</p>
+      <ul class="big">
+        <li><b>Filter</b> — <code>WHERE</code> narrows by dimension or tag</li>
+        <li><b>Split</b> — <code>GROUP BY</code> gives one line per instance, zone, service</li>
+        <li><b>Rank</b> — <code>ORDER BY</code> + <code>LIMIT</code> is a top-N</li>
+        <li><b>Alarm</b> — an alarm on a query follows the fleet as it grows</li>
+        <li><b>Run it</b> — in Query Studio's SQL tab or the console query editor</li>
+      </ul>
+      <pre class="codeblock"><code>SELECT AVG(CPUUtilization)
+FROM SCHEMA("AWS/EC2", InstanceId)
+GROUP BY InstanceId
+ORDER BY MAX() DESC
+LIMIT 10</code></pre>
     </div>
   </section>
 
   <section class="slide">
     <div class="slide-inner">
-      <h2 class="slide-title">Composite &amp; anomaly alarms</h2>
+      <h2 class="slide-title">Ways to view and move metrics</h2>
+      <ul class="big">
+        <li><b><a href="images/metrics-classic-console.png" target="_blank" rel="noopener">Classic Metrics console</a></b> — browse, pick and graph by hand</li>
+        <li><b><a href="images/metrics-query-studio.png" target="_blank" rel="noopener">Query Studio</a></b> — write a PromQL or SQL query (preview)</li>
+        <li><b>Metrics explorer</b> — filter by tag; new matching resources appear on their own</li>
+        <li><b><a href="images/metric-streams-list.png" target="_blank" rel="noopener">Metric streams</a></b> — send metrics out to S3 or partner tools</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="slide-inner">
+      <h2 class="slide-title">Composite alarms &amp; metric anomaly detection</h2>
       <p class="lede">Was this threshold measured, or guessed?</p>
       <ul class="big">
-        <li><b>Composite alarms</b> — one root cause, one page, not three: <code>ALARM(a) AND ALARM(b)</code>.</li>
-        <li><b>Anomaly detection</b> — replace a guessed static threshold with a learned expected-value band.</li>
+        <li><b>Composite alarms</b> — page once, only when it matters: <code>ALARM(a) AND ALARM(b)</code>. Silence the child alarms; alert from the composite.</li>
+        <li><b><a href="images/metric-anomaly-detection-band.png" target="_blank" rel="noopener">Metric anomaly detection</a></b> — a learned band instead of a guessed threshold. Learns trends plus hourly, daily and weekly patterns. Use it on a graph or as an alarm threshold.</li>
       </ul>
-      <div class="svc"><h5>Good habit</h5><p>Set <code>treat_missing_data</code> explicitly on every alarm — avoids surprising evaluation behavior when a metric goes quiet.</p></div>
     </div>
   </section>
 
   <section class="slide">
     <div class="slide-inner">
       <h2 class="slide-title">Alarm mute rules: silence, don't disable</h2>
-      <p class="lede">Stop notifications for a window without losing the alarm's evaluation history or turning it off entirely.</p>
+      <p class="lede">Mute alarm actions for a window. The alarm keeps evaluating, so no history is lost.</p>
       <ul class="big">
-        <li><b>Scheduled mute</b> — one-time or recurring window, built from a picker or a raw cron expression, targeting a chosen set of alarms.</li>
-        <li><b>Quick mute</b> — select alarms in the list → mute for a preset window (15 min / 1 h / 3 h) or a custom time. For "I know this fires during my maintenance window," right when you need it.</li>
+        <li><b>Scheduled mute</b> — one-time or recurring, from a picker or a cron expression, for a chosen set of alarms.</li>
+        <li><b>Quick mute</b> — select alarms, then mute for 15 min, 1 h, 3 h or until a set time.</li>
+        <li><b>Still in alarm when the window ends?</b> The muted action runs then.</li>
       </ul>
-      <div class="svc"><h5>Bonus</h5><p>Existing mute rules can be applied retroactively to newly created alarms — one action instead of remembering to add each new alarm to a maintenance exception list.</p></div>
+      <div class="svc"><h5>New alarms</h5><p>Add them to existing mute rules in one step: select them, then Actions → Mute → Apply existing mute rules.</p></div>
     </div>
   </section>
 
@@ -340,7 +351,7 @@ segment.put_metadata('request_body', payload)    # not indexed</code></pre>
 responsetime > 2
 edge("api.example.com", "backend.example.com") { error }</code></pre>
       <div class="notice"><strong>The gap</strong>Trace search has no sort — it's always most-recent-first. "Top 10 slowest calls" or "error count by API" isn't answerable with a filter expression alone.</div>
-      <div class="svc"><h5>CloudWatch Transaction Search</h5><p>Indexes 100% of spans as structured logs, queryable with Logs Insights' aggregation and sort — the native way to ask APM-shaped questions.</p></div>
+      <div class="svc"><h5><a href="images/transaction-search-spans.png" target="_blank" rel="noopener">CloudWatch Transaction Search</a></h5><p>Indexes 100% of spans as structured logs, queryable with Logs Insights' aggregation and sort — the native way to ask APM-shaped questions.</p></div>
       <pre class="codeblock"><code>FILTER `attributes.http.response.status_code` >= 500
 | STATS count(*) as errors by attributes.aws.local.service
 | SORT errors DESC
@@ -358,12 +369,11 @@ edge("api.example.com", "backend.example.com") { error }</code></pre>
 
   <section class="slide">
     <div class="slide-inner">
-      <h2 class="slide-title">Observability: often a habit gap, not a setup gap</h2>
+      <h2 class="slide-title">Ready-made dashboards: Container, Lambda, Database Insights</h2>
       <div class="grid2">
-        <div class="svc"><h5>Container Insights</h5><p>Enhanced mode dashboards automatically once enabled. The common failure is checking it only during fires, not as a habit.</p></div>
-        <div class="svc"><h5>ServiceLens</h5><p>Zero extra setup wherever Container Insights + X-Ray data already flow — it's discoverable, not buildable.</p></div>
-        <div class="svc"><h5>Lambda Insights</h5><p>A layer + an IAM policy, no code change — a low-cost signal to enable.</p></div>
-        <div class="svc"><h5>Bigger lifts</h5><p>Application Signals (real instrumentation work) and Database Insights (RDS/Aurora-only, not applicable to DynamoDB).</p></div>
+        <div class="svc"><h5><a href="images/container-insights-dashboard.png" target="_blank" rel="noopener">Container Insights</a></h5><p>Dashboards for ECS and EKS: CPU, memory and network per cluster, service, task and container.</p></div>
+        <div class="svc"><h5><a href="images/lambda-insights-multi-function.png" target="_blank" rel="noopener">Lambda Insights</a></h5><p>A layer plus an IAM policy, no code change. CPU, memory and cold starts per function.</p></div>
+        <div class="svc"><h5><a href="images/database-insights-fleet-health.png" target="_blank" rel="noopener">Database Insights</a></h5><p>Fleet health and per-instance load for RDS and Aurora, with the top queries behind the load.</p></div>
       </div>
     </div>
   </section>
@@ -444,7 +454,7 @@ edge("api.example.com", "backend.example.com") { error }</code></pre>
         <div class="svc"><h5>Metrics &amp; alarms</h5><p>EMF as a custom metric, composite &amp; anomaly alarms, alarm mute rules.</p></div>
         <div class="svc"><h5>Dashboards</h5><p>Metric-math widgets, free cross-Region graphing, dashboard variables.</p></div>
         <div class="svc"><h5>X-Ray</h5><p>Filter-expression search, the query cookbook, how trace sampling actually propagates.</p></div>
-        <div class="svc"><h5>Observability</h5><p>Container/Lambda Insights, ServiceLens — mostly a habit gap, not a setup gap.</p></div>
+        <div class="svc"><h5>Observability</h5><p>Container, Lambda and Database Insights dashboards.</p></div>
         <div class="svc"><h5>Worth knowing about</h5><p>Application Signals, Database Insights, S3 Tables Integration, bearer token authentication.</p></div>
       </div>
       <p class="lede" style="margin-top:1rem;">Synthetics &amp; RUM round it out — narrower, more specific tools than their names suggest.</p>
